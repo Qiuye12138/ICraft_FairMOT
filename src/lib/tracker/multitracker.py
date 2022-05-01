@@ -240,13 +240,18 @@ class JDETracker(object):
 
         ''' Step 1: Network forward, get detections & embeddings'''
         with torch.no_grad():
-            output = self.model(im_blob)[-1]
-            hm = output['hm'].sigmoid_()
-            wh = output['wh']
-            id_feature = output['id']
+            if self.opt.export:
+                self.model.export = True
+                trcnet = torch.jit.trace(self.model, im_blob)
+                trcnet.save("./fairmot_lite_traced_Leaky_3out.pt")
+                exit()
+            output = self.model(im_blob)
+            hm = output[0].sigmoid_()
+            wh = output[3]
+            id_feature = output[1]
             id_feature = F.normalize(id_feature, dim=1)
 
-            reg = output['reg'] if self.opt.reg_offset else None
+            reg = output[2] if self.opt.reg_offset else None
             dets, inds = mot_decode(hm, wh, reg=reg, ltrb=self.opt.ltrb, K=self.opt.K)
             id_feature = _tranpose_and_gather_feat(id_feature, inds)
             id_feature = id_feature.squeeze(0)

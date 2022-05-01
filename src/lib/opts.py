@@ -158,6 +158,7 @@ class opts(object):
                              help='category specific bounding box size.')
     self.parser.add_argument('--not_reg_offset', action='store_true',
                              help='not regress local offset.')
+    self.parser.add_argument('--export', default=False, help='export this model')
 
   def parse(self, args=''):
     if args == '':

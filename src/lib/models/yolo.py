@@ -147,11 +147,15 @@ class PoseYOLOv5s(nn.Module):
         self.heads = heads
         super(PoseYOLOv5s, self).__init__()
         self.backbone = Model(config_file)
+        self.export = False
+        self.weights = torch.zeros([5, 5, 1, 1], dtype = torch.float32)
+        for i in range(5):
+            self.weights[i][i][0][0] = 1
         for head in sorted(self.heads):
             num_output = self.heads[head]
             fc = nn.Sequential(
                 nn.Conv2d(64, 64, kernel_size=3, padding=1, bias=True),
-                nn.SiLU(),
+                nn.LeakyReLU(),
                 nn.Conv2d(64, num_output, kernel_size=1, stride=1, padding=0))
             self.__setattr__(head, fc)
             if 'hm' in head:
@@ -161,10 +165,26 @@ class PoseYOLOv5s(nn.Module):
 
     def forward(self, x):
         x = self.backbone(x)
-        ret = {}
-        for head in self.heads:
-            ret[head] = self.__getattr__(head)(x)
-        return [ret]
+        if self.training == True:
+            ret = {}
+            for head in self.heads:
+                ret[head] = self.__getattr__(head)(x)
+            return [ret]
+        else:
+            if self.export:
+                hm = self.hm(x)
+                wh = self.wh(x)
+                hm_wh = torch.cat((hm, wh), dim = 1)
+                hm_wh = nn.functional.conv2d(hm_wh, self.weights, bias = None, stride = 1)
+                id  = self.id(x)
+                reg = self.reg(x)
+                return hm_wh, id, reg
+            else:
+                hm = self.hm(x)
+                id = self.id(x)
+                reg = self.reg(x)
+                wh = self.wh(x)
+                return hm, id, reg, wh
 
 
 def get_pose_net(num_layers, heads, head_conv):

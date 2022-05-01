@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torch.cuda import amp
-from dcn_v2 import DCN
+# from dcn_v2 import DCN
 
 
 def autopad(k, p=None):  # kernel, padding
@@ -31,7 +31,7 @@ class Conv(nn.Module):
         super(Conv, self).__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=False)
         self.bn = nn.BatchNorm2d(c2)
-        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+        self.act = nn.LeakyReLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
 
     def forward(self, x):
         return self.act(self.bn(self.conv(x)))
@@ -53,7 +53,7 @@ class DeConv(nn.Module):
             output_padding=0,
             bias=False)
         self.bn = nn.BatchNorm2d(c2)
-        self.act = nn.SiLU()
+        self.act = nn.LeakyReLU()
 
     def forward(self, x):
         return self.act(self.bn(self.deconv(x)))
@@ -90,10 +90,10 @@ class DeConvDCN(nn.Module):
         fill_up_weights(deconv)
         self.layers.append(dcn)
         self.layers.append(nn.BatchNorm2d(c2))
-        self.layers.append(nn.SiLU())
+        self.layers.append(nn.LeakyReLU())
         self.layers.append(deconv)
         self.layers.append(nn.BatchNorm2d(c2))
-        self.layers.append(nn.SiLU())
+        self.layers.append(nn.LeakyReLU())
         self.layers = nn.Sequential(*self.layers)
 
     def forward(self, x):
