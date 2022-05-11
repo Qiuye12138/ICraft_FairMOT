@@ -84,16 +84,18 @@ python gen_labels_16.py
 
 ### 2.3、训练
 
+下载预训练模型`fairmot_lite.pth`
+
 使用以下代码即可开始训练
 
 ```bash
-python train.py mot --exp_id mot17_half_yolov5s --data_cfg '../src/lib/cfg/mot17_half.json' --lr 5e-4 --batch_size 8 --wh_weight 0.5 --multi_loss 'fix' --arch 'yolo' --gpus 0
+python train.py mot --exp_id mot17_half_yolov5s --data_cfg '../src/lib/cfg/mot17_half.json' --lr 5e-4 --batch_size 8 --wh_weight 0.5 --multi_loss 'fix' --arch 'yolo' --load_model '../fairmot_lite.pth' --gpus 0
 ```
 
 使用以下代码即可恢复最近一次训练
 
 ```bash
-python train.py mot --exp_id mot17_half_yolov5s --data_cfg '../src/lib/cfg/mot17_half.json' --lr 5e-4 --batch_size 8 --wh_weight 0.5 --multi_loss 'fix' --arch 'yolo' --gpus 0 --resume
+python train.py mot --exp_id mot17_half_yolov5s --data_cfg '../src/lib/cfg/mot17_half.json' --lr 5e-4 --batch_size 8 --wh_weight 0.5 --multi_loss 'fix' --arch 'yolo' --load_model '../fairmot_lite.pth' --gpus 0 --resume
 ```
 
 ### 2.4、确认推理正确
@@ -101,10 +103,33 @@ python train.py mot --exp_id mot17_half_yolov5s --data_cfg '../src/lib/cfg/mot17
 使用以下代码即可推理
 
 ```bash
-python demo.py mot --test_mot17 True --load_model ../exp/mot/mot17_half_yolov5s/model_last.pth --conf_thres 0.4 --arch yolo --gpus 0
+python demo.py mot --test_mot17 True --load_model ../exp/mot/mot17_half_yolov5s/model_last.pth --conf_thres 0.4 --arch 'yolo' --gpus 0
+
 ```
 
-### 2.5、保存模型
+### 2.5、测试精度
+
+使用以下代码即可测试精度，需要将`--data_dir`修改为实际数据集路径
+
+```bash
+python track_half.py mot --exp_id mot17_half_yolov5s --data_cfg '../src/lib/cfg/mot17_half.json' --data_dir D:\Dataset\MOT17 --load_model ../exp/mot/mot17_half_yolov5s/model_last.pth --conf_thres 0.4 --val_mot17 True --arch 'yolo'
+```
+
+本次重训练精度为：
+
+```bash
+              IDF1   IDP   IDR  Rcll  Prcn  GT  MT  PT ML   FP    FN IDs    FM  MOTA  MOTP IDt IDa IDm
+MOT17-02-SDP 44.6% 59.0% 35.9% 52.4% 86.0%  53  14  25 14  846  4720 171   280 42.1% 0.228  86  55  11
+MOT17-04-SDP 86.2% 90.1% 82.7% 88.6% 96.6%  69  53  16  0  745  2750  59   294 85.3% 0.194  18  31   3
+MOT17-05-SDP 62.2% 74.7% 53.2% 67.6% 94.9%  71  22  34 15  122  1087  54   112 62.4% 0.197  36  28  18
+MOT17-09-SDP 67.1% 78.9% 58.4% 73.1% 98.8%  22  11   9  2   25   777  27    46 71.3% 0.193  19  11   4
+MOT17-10-SDP 76.3% 90.4% 65.9% 68.9% 94.4%  36  13  21  2  244  1852  39   233 64.1% 0.242  11  18   3
+MOT17-11-SDP 68.5% 78.5% 60.7% 72.1% 93.2%  44  17  14 13  237  1264  46    65 65.8% 0.152  18  21   4
+MOT17-13-SDP 71.9% 81.6% 64.2% 70.9% 90.0%  44  17  21  6  249   922  52   151 61.3% 0.239  16  31   4
+OVERALL      73.6% 82.9% 66.2% 75.2% 94.3% 339 147 140 52 2468 13372 448  1181 69.9% 0.202 204 195  47
+```
+
+### 2.6、保存模型
 
 使用以下代码即可保存模型
 
